@@ -4,8 +4,8 @@ from motor.motor_asyncio import AsyncIOMotorCollection
 from passlib.context import CryptContext
 
 from src.auth.jwt_bearer import JWTBearer, signJWT
-from src.models.auth import AuthResponse
-from src.models.user import UserIn, UserOut
+from src.models.auth import AuthRequest, AuthResponse
+from src.models.user import UserIn, UserInDB, UserOut
 from src.db import get_user_collection
 from src.serializers.user import to_user_out
 
@@ -42,15 +42,14 @@ async def create_user(
 
 @router.post("/login")
 async def login_user(
-    user: UserIn,
+    user: AuthRequest,
     user_col: AsyncIOMotorCollection = Depends(get_user_collection)
 ) -> AuthResponse:
     db_user = await user_col.find_one({ "email": user.email })
     if not db_user:
        raise HTTPException(detail="User doesn't exist", status_code=404)
     
-    hash_pass = pwd_context.hash(user.password)
-    if (hash_pass != db_user["hash_pass"]):
+    if not pwd_context.verify(user.password, db_user["hash_pass"]):
         raise HTTPException(detail="Incorrect password", status_code=404)
     
     token = signJWT(str(db_user["_id"]))
@@ -87,7 +86,14 @@ async def update_user(
     user: UserIn,
     user_col: AsyncIOMotorCollection = Depends(get_user_collection),
 ) -> UserOut:
-    db_user = await user_col.find_one_and_update({"_id": ObjectId(id)}, {"$set": dict(user)})
+    hash_pass = pwd_context.hash(user.password)
+    updated_user = {
+        "name": user.name,
+        "email": user.email,
+        "hash_pass": hash_pass
+    }
+
+    db_user = await user_col.find_one_and_update({"_id": ObjectId(id)}, {"$set": updated_user})
 
     if not db_user:
         raise HTTPException(detail="User not found", status_code=404)
