@@ -28,6 +28,18 @@ async def create_book(
     )
 
 
+@router.get("/")
+async def get_books(
+    params: Annotated[PagingParams, Depends(paging_params)],
+    book_col: AsyncIOMotorCollection = Depends(get_book_collection)
+) -> list[BookOut]:
+    cursor = book_col.find().skip(params.skip).limit(params.limit)
+    
+    books = await cursor.to_list(params.limit)
+    
+    return to_books_out(books)
+
+
 @router.get("/{id}")
 async def get_book(id: str, book_col: AsyncIOMotorCollection = Depends(get_book_collection)) -> BookOut:
     book = await book_col.find_one({"_id": ObjectId(id)})
