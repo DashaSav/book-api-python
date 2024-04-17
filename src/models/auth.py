@@ -1,15 +1,12 @@
 from pydantic import BaseModel, EmailStr
-from user import UserOut as User
+from .token import Token
+from .user import UserOut
 
 class AuthRequest(BaseModel):
     email: EmailStr
     password: str
 
 
-class RegisterRequest(AuthRequest):
-    name: str
-
-
 class AuthResponse(BaseModel):
-    user: User | None = None
-    token: str | None = None
+    user: UserOut | None = None
+    token: Token | None = None

@@ -23,7 +23,7 @@ app.include_router(books_router)
 
 @app.get("/", tags=["general"])
 async def health_check():
-    return {"server": "IsAlive"}
+    return {"msg": "Healthy"}
 
 
 if __name__ == "__main__":

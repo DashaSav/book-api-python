@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from motor.motor_asyncio import AsyncIOMotorCollection
 
 from src.api.general import PagingParams, paging_params
+from src.auth.jwt_bearer import JWTBearer
 from src.db import get_book_collection
 from src.models.book import BookOut, BookIn
 from src.serializers.book import to_book_out, to_books_out
@@ -12,7 +13,7 @@ from src.serializers.book import to_book_out, to_books_out
 router = APIRouter(prefix="/books", tags=["books"])
 
 
-@router.post("/", status_code=201)
+@router.post("/", status_code=201, dependencies=[Depends(JWTBearer())])
 async def create_book(
     book: BookIn,
     book_col: AsyncIOMotorCollection = Depends(get_book_collection)
@@ -63,7 +64,7 @@ async def get_book_by_author(
     return to_books_out(books)
 
 
-@router.put("/{id}")
+@router.put("/{id}", dependencies=[Depends(JWTBearer())])
 async def update_book(
     id: str,
     book: BookIn,
@@ -77,7 +78,7 @@ async def update_book(
     return to_book_out(db_book)
 
 
-@router.delete("/{id}")
+@router.delete("/{id}", dependencies=[Depends(JWTBearer())])
 async def delete_book(
     id: str,
     book_col: AsyncIOMotorCollection = Depends(get_book_collection)

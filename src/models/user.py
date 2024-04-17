@@ -12,3 +12,7 @@ class UserIn(BaseUser):
 
 class UserOut(BaseUser):
     id: str = Field(alias="_id")
+
+
+class UserInDB(UserOut):
+    hash_pass: str

@@ -3,6 +3,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from motor.motor_asyncio import AsyncIOMotorCollection
 from passlib.context import CryptContext
 
+from src.auth.jwt_bearer import JWTBearer, signJWT
+from src.models.auth import AuthResponse
 from src.models.user import UserIn, UserOut
 from src.db import get_user_collection
 from src.serializers.user import to_user_out
@@ -17,26 +19,49 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 async def create_user(
     user: UserIn,
     user_col: AsyncIOMotorCollection = Depends(get_user_collection)
-) -> UserOut:
+) -> AuthResponse:
     db_user = await user_col.find_one({ "email": user.email })
     if db_user is not None:
        raise HTTPException(detail="User with this email already exists", status_code=404)
 
-    hashed_password = pwd_context.hash(user.password)
+    hash_pass = pwd_context.hash(user.password)
     
     user_to_insert = {
         "name": user.name,
         "email": user.email,
-        "password": hashed_password
+        "hash_pass": hash_pass
     }
 
     inserted = await user_col.insert_one(user_to_insert)
 
-    return UserOut(_id=str(inserted.inserted_id), name=user.name, email=user.email)
+    user_out = UserOut(_id=str(inserted.inserted_id), name=user.name, email=user.email)
+    token = signJWT(user_out.id)
+
+    return AuthResponse(user=user_out, token=token)
+
+
+@router.post("/login")
+async def login_user(
+    user: UserIn,
+    user_col: AsyncIOMotorCollection = Depends(get_user_collection)
+) -> AuthResponse:
+    db_user = await user_col.find_one({ "email": user.email })
+    if not db_user:
+       raise HTTPException(detail="User doesn't exist", status_code=404)
+    
+    hash_pass = pwd_context.hash(user.password)
+    if (hash_pass != db_user["hash_pass"]):
+        raise HTTPException(detail="Incorrect password", status_code=404)
+    
+    token = signJWT(str(db_user["_id"]))
+    return AuthResponse(user=to_user_out(db_user), token=token)
 
 
 @router.get("/{id}")
-async def get_user(id: str, user_col: AsyncIOMotorCollection = Depends(get_user_collection)) -> UserOut:
+async def get_user(
+    id: str, 
+    user_col: AsyncIOMotorCollection = Depends(get_user_collection),
+) -> UserOut:
     user = await user_col.find_one({"_id": ObjectId(id)})
     if user is None:
         raise HTTPException(detail="User not found", status_code=404)
@@ -50,27 +75,27 @@ async def get_user_by_email(
     user_col: AsyncIOMotorCollection = Depends(get_user_collection)
 ) -> UserOut:
     user = await user_col.find_one({"email": email})
-    if user is None:
+    if not user:
         raise HTTPException(detail="User not found", status_code=404)
     
     return to_user_out(user)
 
 
-@router.put("/{id}")
+@router.put("/{id}", dependencies=[Depends(JWTBearer())])
 async def update_user(
     id: str,
     user: UserIn,
-    user_col: AsyncIOMotorCollection = Depends(get_user_collection)
+    user_col: AsyncIOMotorCollection = Depends(get_user_collection),
 ) -> UserOut:
     db_user = await user_col.find_one_and_update({"_id": ObjectId(id)}, {"$set": dict(user)})
 
-    if db_user is None:
+    if not db_user:
         raise HTTPException(detail="User not found", status_code=404)
     
-    return to_user_out(db_user)
+    return to_user_out(await user_col.find_one({"_id": ObjectId(id)}))
 
 
-@router.delete("/{id}")
+@router.delete("/{id}", dependencies=[Depends(JWTBearer())])
 async def delete_user(
     id: str,
     user_col: AsyncIOMotorCollection = Depends(get_user_collection)
