@@ -5,9 +5,8 @@ from passlib.context import CryptContext
 
 from src.auth.jwt_bearer import JWTBearer, signJWT
 from src.models.auth import AuthRequest, AuthResponse
-from src.models.user import UserIn, UserInDB, UserOut
+from src.models.user import UserIn, UserOut
 from src.db import get_user_collection
-from src.serializers.user import to_user_out
 
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -34,8 +33,8 @@ async def create_user(
 
     inserted = await user_col.insert_one(user_to_insert)
 
-    user_out = UserOut(_id=str(inserted.inserted_id), name=user.name, email=user.email)
-    token = signJWT(user_out.id)
+    user_out = UserOut(_id=inserted.inserted_id, name=user.name, email=user.email)
+    token = signJWT(str(user_out.id))
 
     return AuthResponse(user=user_out, token=token)
 
@@ -53,7 +52,7 @@ async def login_user(
         raise HTTPException(detail="Incorrect password", status_code=404)
     
     token = signJWT(str(db_user["_id"]))
-    return AuthResponse(user=to_user_out(db_user), token=token)
+    return AuthResponse(user=db_user, token=token)
 
 
 @router.get("/{id}")
@@ -65,7 +64,7 @@ async def get_user(
     if user is None:
         raise HTTPException(detail="User not found", status_code=404)
     
-    return to_user_out(user)
+    return user
 
 
 @router.get("/findByEmail/{email}")
@@ -77,7 +76,7 @@ async def get_user_by_email(
     if not user:
         raise HTTPException(detail="User not found", status_code=404)
     
-    return to_user_out(user)
+    return user
 
 
 @router.put("/{id}", dependencies=[Depends(JWTBearer())])
@@ -93,12 +92,14 @@ async def update_user(
         "hash_pass": hash_pass
     }
 
-    db_user = await user_col.find_one_and_update({"_id": ObjectId(id)}, {"$set": updated_user})
+    await user_col.update_one({"_id": ObjectId(id)}, {"$set": updated_user})
+    
+    updated_user = await user_col.find_one({"_id": ObjectId(id)})
 
-    if not db_user:
+    if not updated_user:
         raise HTTPException(detail="User not found", status_code=404)
     
-    return to_user_out(await user_col.find_one({"_id": ObjectId(id)}))
+    return updated_user
 
 
 @router.delete("/{id}", dependencies=[Depends(JWTBearer())])

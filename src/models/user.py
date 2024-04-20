@@ -1,5 +1,7 @@
 from pydantic import BaseModel, EmailStr, Field
 
+from src.models.common import PyObjectId
+
 
 class BaseUser(BaseModel):
     name: str = Field(...)
@@ -11,7 +13,7 @@ class UserIn(BaseUser):
 
 
 class UserOut(BaseUser):
-    id: str = Field(alias="_id")
+    id: PyObjectId = Field(alias="_id")
 
 
 class UserInDB(UserOut):

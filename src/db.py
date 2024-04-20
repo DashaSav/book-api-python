@@ -25,6 +25,9 @@ def get_user_collection(db: AsyncIOMotorDatabase = Depends(get_db)) -> AsyncIOMo
 def get_book_collection(db: AsyncIOMotorDatabase = Depends(get_db)) -> AsyncIOMotorCollection:
     return db.get_collection("books")
 
+def get_comment_collection(db: AsyncIOMotorDatabase = Depends(get_db)) -> AsyncIOMotorCollection:
+    return db.get_collection("comments")
+
 
 def connect_and_init_db():
     global db_client

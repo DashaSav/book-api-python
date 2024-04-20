@@ -7,7 +7,6 @@ from src.api.general import PagingParams, paging_params
 from src.auth.jwt_bearer import JWTBearer
 from src.db import get_book_collection
 from src.models.book import BookOut, BookIn
-from src.serializers.book import to_book_out, to_books_out
 
 
 router = APIRouter(prefix="/books", tags=["books"])
@@ -17,15 +16,9 @@ router = APIRouter(prefix="/books", tags=["books"])
 async def create_book(
     book: BookIn,
     book_col: AsyncIOMotorCollection = Depends(get_book_collection)
-):
+) -> BookOut | None:
     inserted = await book_col.insert_one(dict(book))
-
-    return BookOut(
-        _id=str(inserted.inserted_id), 
-        title=book.title,
-        author=book.author, 
-        description=book.description
-    )
+    return await book_col.find_one(inserted.inserted_id)
 
 
 @router.get("/")
@@ -34,10 +27,7 @@ async def get_books(
     book_col: AsyncIOMotorCollection = Depends(get_book_collection)
 ) -> list[BookOut]:
     cursor = book_col.find().skip(params.skip).limit(params.limit)
-    
-    books = await cursor.to_list(params.limit)
-    
-    return to_books_out(books)
+    return await cursor.to_list(params.limit)
 
 
 @router.get("/{id}")
@@ -47,7 +37,7 @@ async def get_book(id: str, book_col: AsyncIOMotorCollection = Depends(get_book_
     if book is None:
         raise HTTPException(detail="Book not found", status_code=404)
     
-    return to_book_out(book)
+    return book
 
 
 @router.get("/findByTitle/{title}")
@@ -57,10 +47,7 @@ async def get_book_by_title(
     book_col: AsyncIOMotorCollection = Depends(get_book_collection)
 ) -> list[BookOut]:
     cursor = book_col.find({"title": {"$regex": title}}).skip(params.skip).limit(params.limit)
-    
-    books = await cursor.to_list(params.limit)
-    
-    return to_books_out(books)
+    return await cursor.to_list(params.limit)
 
 
 @router.get("/findByAuthor/{author}")
@@ -70,10 +57,7 @@ async def get_book_by_author(
     book_col: AsyncIOMotorCollection = Depends(get_book_collection)
 ) -> list[BookOut]:
     cursor = book_col.find({"author": {"$regex": author}}).skip(params.skip).limit(params.limit)
-    
-    books = await cursor.to_list(params.limit)
-    
-    return to_books_out(books)
+    return await cursor.to_list(params.limit)
 
 
 @router.put("/{id}", dependencies=[Depends(JWTBearer())])
@@ -87,7 +71,7 @@ async def update_book(
     if db_book is None:
         raise HTTPException(detail="Book not found", status_code=404)
     
-    return to_book_out(db_book)
+    return db_book
 
 
 @router.delete("/{id}", dependencies=[Depends(JWTBearer())])
