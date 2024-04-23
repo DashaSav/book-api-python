@@ -23,12 +23,12 @@ async def create_user(
     if db_user is not None:
        raise HTTPException(detail="User with this email already exists", status_code=404)
 
-    hash_pass = pwd_context.hash(user.password)
+    hash_password = pwd_context.hash(user.password)
     
     user_to_insert = {
         "name": user.name,
         "email": user.email,
-        "hash_pass": hash_pass
+        "hash_password": hash_password
     }
 
     inserted = await user_col.insert_one(user_to_insert)
@@ -48,7 +48,7 @@ async def login_user(
     if not db_user:
        raise HTTPException(detail="User doesn't exist", status_code=404)
     
-    if not pwd_context.verify(user.password, db_user["hash_pass"]):
+    if not pwd_context.verify(user.password, db_user["hash_password"]):
         raise HTTPException(detail="Incorrect password", status_code=404)
     
     token = signJWT(str(db_user["_id"]))
@@ -85,11 +85,11 @@ async def update_user(
     user: UserIn,
     user_col: AsyncIOMotorCollection = Depends(get_user_collection),
 ) -> UserOut:
-    hash_pass = pwd_context.hash(user.password)
+    hash_password = pwd_context.hash(user.password)
     updated_user = {
         "name": user.name,
         "email": user.email,
-        "hash_pass": hash_pass
+        "hash_password": hash_password
     }
 
     await user_col.update_one({"_id": ObjectId(id)}, {"$set": updated_user})

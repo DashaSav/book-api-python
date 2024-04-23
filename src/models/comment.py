@@ -1,13 +1,11 @@
 from pydantic import BaseModel, Field
 
-from src.models.user import UserOut
-
 from .common import PyObjectId
 
 
 class CommentIn(BaseModel):
-    like: int
-    author: UserOut
+    user_id: PyObjectId
+    like: int = 0
     content: str
 
 

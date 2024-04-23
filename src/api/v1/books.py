@@ -18,8 +18,14 @@ async def create_book(
     book_col: AsyncIOMotorCollection = Depends(get_book_collection)
 ) -> BookOut | None:
     inserted = await book_col.insert_one(dict(book))
-    return await book_col.find_one(inserted.inserted_id)
 
+    inserted_book = await book_col.aggregate([
+        {"$match": { "_id": inserted.inserted_id }}, 
+        {"$lookup": { "from": "users", "localField": "user_id", "foreignField": "_id", "as": "user" }}, 
+        {"$unwind": { "path": "$user" }}
+    ]).to_list(length=1)
+
+    return inserted_book[0]
 
 @router.get("/")
 async def get_books(

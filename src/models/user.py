@@ -17,4 +17,4 @@ class UserOut(BaseUser):
 
 
 class UserInDB(UserOut):
-    hash_pass: str
+    hash_password: str
