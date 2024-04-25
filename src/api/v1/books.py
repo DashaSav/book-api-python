@@ -20,8 +20,8 @@ async def create_book(
     inserted = await book_col.insert_one(dict(book))
 
     inserted_book = await book_col.aggregate([
-        {"$match": { "_id": inserted.inserted_id }}, 
-        {"$lookup": { "from": "users", "localField": "user_id", "foreignField": "_id", "as": "user" }}, 
+        {"$match": { "_id": inserted.inserted_id }},
+        {"$lookup": { "from": "users", "localField": "user_id", "foreignField": "_id", "as": "user" }},
         {"$unwind": { "path": "$user" }}
     ]).to_list(length=1)
 
@@ -31,8 +31,14 @@ async def create_book(
 async def get_books(
     params: Annotated[PagingParams, Depends(paging_params)],
     book_col: AsyncIOMotorCollection = Depends(get_book_collection)
-) -> list[BookOut]:
-    cursor = book_col.find().skip(params.skip).limit(params.limit)
+) -> list[BookOut] | None:
+    cursor = book_col.aggregate([
+        {"$lookup": { "from": "users", "localField": "user_id", "foreignField": "_id", "as": "user" }},
+        {"$unwind": { "path": "$user" }},
+        {"$skip": params.skip},
+        {"$limit": params.limit}
+    ])
+
     return await cursor.to_list(params.limit)
 
 
