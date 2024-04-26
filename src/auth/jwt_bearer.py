@@ -47,9 +47,9 @@ class JWTBearer(HTTPBearer):
         return isTokenValid
 
 
-def signJWT(user_id: str) -> Token:
+def signJWT(user_id) -> Token:
     payload = {
-        "user_id": user_id,
+        "user_id": str(user_id),
         "expires": time.time() + SECONDS_TO_EXPIRE
     }
     token = jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)

@@ -17,28 +17,23 @@ router = APIRouter(prefix="/chapters", tags=["chapters"])
 async def create_chapter(
     chapter: ChapterIn,
     chapter_col: AsyncIOMotorCollection = Depends(get_chapter_collection)
-) -> ChapterOut | None:
+) -> ChapterOut:
     inserted = await chapter_col.insert_one(dict(chapter))
 
-    inserted_chapter = await chapter_col.aggregate([
-        {"$match": { "_id": inserted.inserted_id }},
-        {"$lookup": { "from": "users", "localField": "user_id", "foreignField": "_id", "as": "user" }},
-        {"$unwind": { "path": "$user" }}
-    ]).to_list(length=1)
+    inserted_chapter = await chapter_col.find_one({"_id": inserted.inserted_id})
+    
+    if not inserted_chapter:
+        raise HTTPException(detail="Chapter wasn't created", status_code=404)
 
-    return inserted_chapter[0]
+    return inserted_chapter
+
 
 @router.get("/")
 async def get_chapters(
     params: Annotated[PagingParams, Depends(paging_params)],
     chapter_col: AsyncIOMotorCollection = Depends(get_chapter_collection)
 ) -> list[ChapterOut] | None:
-    cursor = chapter_col.aggregate([
-        {"$lookup": { "from": "users", "localField": "user_id", "foreignField": "_id", "as": "user" }},
-        {"$unwind": { "path": "$user" }},
-        {"$skip": params.skip},
-        {"$limit": params.limit}
-    ])
+    cursor = chapter_col.find().skip(params.skip).limit(params.limit);
 
     return await cursor.to_list(params.limit)
 
@@ -68,8 +63,8 @@ async def update_chapter(
 
 
 @router.delete("/{id}", dependencies=[Depends(JWTBearer())])
-async def delete_book(
+async def delete_chapter(
     id: str,
-    book_col: AsyncIOMotorCollection = Depends(get_chapter_collection)
+    chapter_col: AsyncIOMotorCollection = Depends(get_chapter_collection)
 ):
-    await book_col.delete_one({"_id": ObjectId(id)})
+    await chapter_col.delete_one({"_id": ObjectId(id)})

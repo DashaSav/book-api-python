@@ -1,8 +1,5 @@
 from pydantic import BaseModel, Field
 
-from src.models.book import BookOut
-from src.models.user import BaseUser
-
 from .common import PyObjectId
 
 
@@ -15,4 +12,3 @@ class ChapterIn(BaseModel):
 
 class ChapterOut(ChapterIn):
     id: PyObjectId = Field(alias="_id")
-    user: BaseUser
