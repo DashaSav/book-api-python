@@ -33,6 +33,7 @@ class UserInteractor:
         if not created_user:
             return None
         
+        print(created_user)
         token = signJWT(created_user.id)
         return (created_user, token)
     
@@ -44,7 +45,7 @@ class UserInteractor:
         
         if not self.pwd_context.verify(request.password, db_user.hash_password):
             return None
-        
+    
         token = signJWT(str(db_user.id))
         return (db_user, token)
     
