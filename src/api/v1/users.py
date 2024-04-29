@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from src.auth.jwt_bearer import JWTBearer
 from src.models.auth import AuthRequest, AuthResponse
+from src.models.common import PyObjectId
 from src.models.user import UserIn, UserOut
 from src.structure import user_repository, user_interactor
 
@@ -29,7 +30,7 @@ async def login_user(request: AuthRequest) -> AuthResponse:
 
 
 @router.get("/{id}")
-async def get_user(id: str) -> UserOut:
+async def get_user(id: PyObjectId) -> UserOut:
     user = await user_repository.get_by_id(id)
 
     if user is None:
@@ -48,7 +49,7 @@ async def get_user_by_email(email: str) -> UserOut:
 
 
 @router.put("/{id}", dependencies=[Depends(JWTBearer())])
-async def update_user(id: str, user: UserIn) -> UserOut:
+async def update_user(id: PyObjectId, user: UserIn) -> UserOut:
     updated_user = await user_interactor.update_user(id, user)
     if not updated_user:
         raise HTTPException(detail="User not found", status_code=404)

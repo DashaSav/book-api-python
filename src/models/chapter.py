@@ -4,7 +4,6 @@ from .common import PyObjectId
 
 
 class ChapterIn(BaseModel):
-    user_id: PyObjectId
     book_id: PyObjectId
     title: str
     text: str | None = None

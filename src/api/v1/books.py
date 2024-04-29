@@ -1,50 +1,30 @@
 from typing import Annotated
-from bson import ObjectId
 from fastapi import APIRouter, Depends, HTTPException
-from motor.motor_asyncio import AsyncIOMotorCollection
 
 from src.api.general import PagingParams, paging_params
 from src.auth.jwt_bearer import JWTBearer
-from src.db import get_book_collection
 from src.models.book import BookOut, BookIn
+from src.models.common import PyObjectId
+from src.structure import book_repository
 
 
 router = APIRouter(prefix="/books", tags=["books"])
 
 
 @router.post("/", status_code=201, dependencies=[Depends(JWTBearer())])
-async def create_book(
-    book: BookIn,
-    book_col: AsyncIOMotorCollection = Depends(get_book_collection)
-) -> BookOut | None:
-    inserted = await book_col.insert_one(dict(book))
-
-    inserted_book = await book_col.aggregate([
-        {"$match": { "_id": inserted.inserted_id }},
-        {"$lookup": { "from": "users", "localField": "user_id", "foreignField": "_id", "as": "user" }},
-        {"$unwind": { "path": "$user" }}
-    ]).to_list(length=1)
-
-    return inserted_book[0]
+async def create_book(book: BookIn) -> BookOut | None:
+    return await book_repository.create(book)
 
 @router.get("/")
 async def get_books(
-    params: Annotated[PagingParams, Depends(paging_params)],
-    book_col: AsyncIOMotorCollection = Depends(get_book_collection)
+    params: Annotated[PagingParams, Depends(paging_params)]
 ) -> list[BookOut] | None:
-    cursor = book_col.aggregate([
-        {"$lookup": { "from": "users", "localField": "user_id", "foreignField": "_id", "as": "user" }},
-        {"$unwind": { "path": "$user" }},
-        {"$skip": params.skip},
-        {"$limit": params.limit}
-    ])
-
-    return await cursor.to_list(params.limit)
+    return await book_repository.get_all(params)
 
 
 @router.get("/{id}")
-async def get_book(id: str, book_col: AsyncIOMotorCollection = Depends(get_book_collection)) -> BookOut:
-    book = await book_col.find_one({"_id": ObjectId(id)})
+async def get_book(id: PyObjectId) -> BookOut:
+    book = await book_repository.get_by_id(id)
 
     if book is None:
         raise HTTPException(detail="Book not found", status_code=404)
@@ -53,32 +33,32 @@ async def get_book(id: str, book_col: AsyncIOMotorCollection = Depends(get_book_
 
 
 @router.get("/findByTitle/{title}")
-async def get_book_by_title(
+async def get_books_by_title(
     title: str,
-    params: Annotated[PagingParams, Depends(paging_params)],
-    book_col: AsyncIOMotorCollection = Depends(get_book_collection)
+    params: Annotated[PagingParams, Depends(paging_params)]
 ) -> list[BookOut]:
-    cursor = book_col.find({"title": {"$regex": title}}).skip(params.skip).limit(params.limit)
-    return await cursor.to_list(params.limit)
+    return await book_repository.get_by_title(title, params)
 
 
 @router.get("/findByAuthor/{author}")
-async def get_book_by_author(
+async def get_books_by_author(
     author: str,
-    params: Annotated[PagingParams, Depends(paging_params)],
-    book_col: AsyncIOMotorCollection = Depends(get_book_collection)
+    params: Annotated[PagingParams, Depends(paging_params)]
 ) -> list[BookOut]:
-    cursor = book_col.find({"author": {"$regex": author}}).skip(params.skip).limit(params.limit)
-    return await cursor.to_list(params.limit)
+    return await book_repository.get_by_author(author, params)
+
+
+@router.get("/findByUser/{id}")
+async def get_books_by_user(
+    id: PyObjectId,
+    params: Annotated[PagingParams, Depends(paging_params)]
+) -> list[BookOut]:
+    return await book_repository.get_by_user(id, params)
 
 
 @router.put("/{id}", dependencies=[Depends(JWTBearer())])
-async def update_book(
-    id: str,
-    book: BookIn,
-    book_col: AsyncIOMotorCollection = Depends(get_book_collection)
-) -> BookOut:
-    db_book = await book_col.find_one_and_update({"_id": ObjectId(id)}, {"$set": dict(book)})
+async def update_book(id: PyObjectId, book: BookIn) -> BookOut:
+    db_book = await book_repository.update(id, book)
 
     if db_book is None:
         raise HTTPException(detail="Book not found", status_code=404)
@@ -87,8 +67,5 @@ async def update_book(
 
 
 @router.delete("/{id}", dependencies=[Depends(JWTBearer())])
-async def delete_book(
-    id: str,
-    book_col: AsyncIOMotorCollection = Depends(get_book_collection)
-):
-    await book_col.delete_one({"_id": ObjectId(id)})
+async def delete_book(id: PyObjectId):
+    await book_repository.delete(id)
