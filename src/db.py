@@ -26,7 +26,7 @@ def get_book_collection(db: AsyncIOMotorDatabase = Depends(get_db)) -> AsyncIOMo
     return db.get_collection("books")
 
 def get_chapter_collection(db: AsyncIOMotorDatabase = Depends(get_db)) -> AsyncIOMotorCollection:
-    return db.chapter_collection("chapters")
+    return db.get_collection("chapters")
 
 def get_comment_collection(db: AsyncIOMotorDatabase = Depends(get_db)) -> AsyncIOMotorCollection:
     return db.get_collection("comments")

@@ -15,7 +15,7 @@ async def create_comment(comment: CommentIn) -> CommentOut | None:
     return await comment_repository.create(comment)
 
 
-@router.get("/findByBookId/{id}")
+@router.get("/findByBook/{id}")
 async def get_book_comments(
     id: PyObjectId,
     params: Annotated[PagingParams, Depends(paging_params)]
