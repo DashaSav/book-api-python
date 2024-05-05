@@ -1,7 +1,7 @@
 from src.auth.jwt_bearer import signJWT
 from src.models.auth import AuthRequest
 from src.models.token import Token
-from src.models.user import UserCreate, UserIn, UserOut, UserUpdate
+from src.models.user import UserUpsert, UserIn, UserOut, UserUpdate
 from src.repositories.user_repository import UserRepository
 
 from passlib.context import CryptContext
@@ -28,12 +28,11 @@ class UserInteractor:
             "email": user.email,
             "hash_password": hash_password
         }
-        created_user = await self.repository.create(UserCreate(**user_to_insert))
+        created_user = await self.repository.create(UserUpsert(**user_to_insert))
         
         if not created_user:
             return None
         
-        print(created_user)
         token = signJWT(created_user.id)
         return (created_user, token)
     
@@ -50,16 +49,23 @@ class UserInteractor:
         return (db_user, token)
     
 
-    async def update_user(self, id: str, user: UserIn) -> UserOut | None:
-        if await self.repository.get_by_id(id):
+    async def update_user(self, id: str, user: UserUpdate) -> UserOut | None:
+        db_user = await self.repository.get_by_id(id)
+        if not db_user:
             return None
         
-        hash_password = self.pwd_context.hash(user.password)
+        if (user.password):
+            hash_password = self.pwd_context.hash(user.password)
+
         updated_user = {
             "name": user.name,
-            "email": user.email,
-            "hash_password": hash_password
+            "email": user.email
         }
 
-        return await self.repository.update(id, UserUpdate(**updated_user))
+        if hash_password:
+            updated_user["hash_password"] = hash_password
+        else:
+            updated_user["hash_password"] = db_user.hash_password
+
+        return await self.repository.update(id, UserUpsert(**updated_user))
         

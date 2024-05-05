@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field
 
 from src.models.common import PyObjectId
 
@@ -13,10 +13,10 @@ class UserIn(BaseUser):
 
 
 class UserUpdate(BaseUser):
-    hash_password: str
+    password: str | None = Field(min_length=8, max_length=30, default=None)
 
 
-class UserCreate(BaseUser):
+class UserUpsert(BaseUser):
     hash_password: str
 
 
