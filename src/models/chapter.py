@@ -7,6 +7,7 @@ class ChapterIn(BaseModel):
     book_id: PyObjectId
     title: str
     text: str | None = None
+    comment: str | None = None
 
 
 class ChapterOut(ChapterIn):
