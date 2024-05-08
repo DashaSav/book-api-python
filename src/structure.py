@@ -1,21 +1,23 @@
 from src.db import (
+    get_chapter_collection,
     get_db, 
     get_user_collection,
     get_book_collection,
-    get_chapter_collection,
     get_comment_collection
-) 
-from src.interactors.user_interactor import UserInteractor
-from src.models.converters.chapter_converter import ChapterConverter
+)
+
 from src.models.converters.user_converter import UserConverter
-from src.repositories.chapter_repository import ChapterRepository
-from src.repositories.user_repository import UserRepository
-
 from src.models.converters.book_converter import BookConverter
-from src.repositories.book_repository import BookRepository
-
 from src.models.converters.comment_converter import CommentConverter
+from src.models.converters.chapter_converter import ChapterConverter
+
+from src.repositories.user_repository import UserRepository
+from src.repositories.book_repository import BookRepository
 from src.repositories.comment_repository import CommentRepository
+from src.repositories.chapter_repository import ChapterRepository
+
+from src.interactors.user_interactor import UserInteractor
+
 
 db = get_db()
 

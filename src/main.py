@@ -2,10 +2,10 @@ import uvicorn
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .api.v1.users import router as user_router
-from .api.v1.books import router as books_router
-from .api.v1.comments import router as comments_router
-from .api.v1.chapters import router as chapters_router
+from src.api.v1.users import router as user_router
+from src.api.v1.books import router as books_router
+from src.api.v1.comments import router as comments_router
+from src.api.v1.chapters import router as chapters_router
 
 app = FastAPI(
     title="Books API",

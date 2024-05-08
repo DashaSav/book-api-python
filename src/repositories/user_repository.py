@@ -2,7 +2,7 @@ from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorCollection
 
 from src.models.converters.user_converter import UserConverter
-from src.models.user import UserUpsert, UserInDB, UserUpdate
+from src.models.user import UserUpsert, UserInDB
 
 class UserRepository:
     def __init__(self, collection: AsyncIOMotorCollection, converter: UserConverter):
@@ -19,7 +19,7 @@ class UserRepository:
         document = await self.collection.find_one({"email": email})
         return self.converter.from_document(document) if document else None
     
-
+    # object ? update : insert => upsert
     async def create(self, user: UserUpsert) -> UserInDB | None:
         inserted = await self.collection.insert_one(dict(user))
         document = await self.collection.find_one({"_id": inserted.inserted_id})

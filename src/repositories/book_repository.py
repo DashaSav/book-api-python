@@ -93,4 +93,4 @@ class BookRepository:
     
 
     async def delete(self, id: str):
-        await self.collection.delete_one({"_id": ObjectId(id)})
+        return await self.collection.delete_one({"_id": ObjectId(id)})
