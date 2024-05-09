@@ -1,9 +1,9 @@
-from src.models.user import UserInDB
+from src.models.user import UserInDB, UserUpdate, UserUpsert
 
 
 class UserConverter:
-    def to_document(self, model: UserInDB):
-        return model.model_dump(by_alias=True)
+    def to_document(self, model: UserUpdate | UserUpsert | UserInDB):
+        return model.model_dump()
 
     
     def from_document(self, document: dict):

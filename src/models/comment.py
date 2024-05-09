@@ -1,4 +1,5 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
+from pydantic.alias_generators import to_camel
 
 from src.models.user import BaseUser
 
@@ -10,6 +11,11 @@ class CommentIn(BaseModel):
     book_id: PyObjectId
     like: int = 0
     content: str
+
+    model_config = ConfigDict(
+        populate_by_name=True,
+        alias_generator=to_camel
+    )
 
 
 class CommentOut(CommentIn):

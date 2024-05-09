@@ -54,5 +54,5 @@ async def update_chapter(id: PyObjectId, chapter: ChapterIn) -> ChapterOut:
 
 
 @router.delete("/{id}", dependencies=[Depends(JWTBearer())])
-async def delete_chapter(id: str):
+async def delete_chapter(id: PyObjectId):
     await chapter_repository.delete(id)
