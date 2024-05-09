@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from src.api.v1.users import router as user_router
 from src.api.v1.books import router as books_router
 from src.api.v1.comments import router as comments_router
+from src.api.v1.chapters import router as chapters_router
 
 app = FastAPI(
     title="Books API",
@@ -21,6 +22,7 @@ app.add_middleware(
 app.include_router(user_router)
 app.include_router(books_router)
 app.include_router(comments_router)
+app.include_router(chapters_router)
 
 
 @app.get("/", tags=["general"])

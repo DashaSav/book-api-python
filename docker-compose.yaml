@@ -7,10 +7,15 @@ services:
     depends_on:
       - mongo
     env_file: .env
-    restart: always
+    restart: on-failure
     networks:
       - backend
     entrypoint: uvicorn main:app --host 0.0.0.0 --port 8080
+    develop:
+      watch:
+        - action: sync
+          path: .
+          target: /app
 
   mongo:
     image: mongo:6.0.14
