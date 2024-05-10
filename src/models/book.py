@@ -1,3 +1,4 @@
+from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
 
@@ -14,6 +15,7 @@ class BookIn(BaseModel):
     comment_restriction: str | None = None
     age_restriction: str | None = None
     agreement: bool = True
+    created_at: datetime = datetime.now()
     
     model_config = ConfigDict(
         alias_generator=to_camel,

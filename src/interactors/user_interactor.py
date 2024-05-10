@@ -1,5 +1,6 @@
 from src.auth.jwt_bearer import signJWT
 from src.models.auth import AuthRequest
+from src.models.common import PyObjectId
 from src.models.token import Token
 from src.models.user import UserUpsert, UserIn, UserOut, UserUpdate
 from src.repositories.user_repository import UserRepository
@@ -49,7 +50,7 @@ class UserInteractor:
         return (db_user, token)
     
 
-    async def update_user(self, id: str, user: UserUpdate) -> UserOut | None:
+    async def update_user(self, id: PyObjectId, user: UserUpdate) -> UserOut | None:
         db_user = await self.repository.get_by_id(id)
         if not db_user:
             return None

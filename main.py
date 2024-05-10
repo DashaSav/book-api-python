@@ -6,6 +6,8 @@ from src.api.v1.users import router as user_router
 from src.api.v1.books import router as books_router
 from src.api.v1.comments import router as comments_router
 from src.api.v1.chapters import router as chapters_router
+from src.api.v1.reports import router as reports_router
+
 
 app = FastAPI(
     title="Books API",
@@ -23,6 +25,7 @@ app.include_router(user_router)
 app.include_router(books_router)
 app.include_router(comments_router)
 app.include_router(chapters_router)
+app.include_router(reports_router)
 
 
 @app.get("/", tags=["general"])

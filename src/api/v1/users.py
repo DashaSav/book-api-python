@@ -58,5 +58,5 @@ async def update_user(id: PyObjectId, user: UserUpdate) -> UserOut:
 
 
 @router.delete("/{id}", dependencies=[Depends(JWTBearer())])
-async def delete_user(id: str):
+async def delete_user(id: PyObjectId):
     await user_repository.delete(id)
