@@ -1,7 +1,6 @@
 import logging
 import os
 from dotenv import load_dotenv
-from fastapi import Depends
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase, AsyncIOMotorCollection
 
 load_dotenv()
@@ -18,21 +17,8 @@ def get_db() -> AsyncIOMotorDatabase:
     return db_client.get_database(db_name) # type: ignore
 
 
-def get_user_collection(db: AsyncIOMotorDatabase = Depends(get_db)) -> AsyncIOMotorCollection:
-    return db.get_collection("users")
-
-
-def get_book_collection(db: AsyncIOMotorDatabase = Depends(get_db)) -> AsyncIOMotorCollection:
-    return db.get_collection("books")
-
-def get_comment_collection(db: AsyncIOMotorDatabase = Depends(get_db)) -> AsyncIOMotorCollection:
-    return db.get_collection("comments")
-
-def get_chapter_collection(db: AsyncIOMotorDatabase = Depends(get_db)) -> AsyncIOMotorCollection:
-    return db.get_collection("chapters")
-
-def get_report_collection(db: AsyncIOMotorDatabase = Depends(get_db)) -> AsyncIOMotorCollection:
-    return db.get_collection("reports")
+def get_collection(db: AsyncIOMotorDatabase, collection: str) -> AsyncIOMotorCollection:
+    return db.get_collection(collection)
 
 
 def connect_and_init_db():

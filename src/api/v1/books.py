@@ -15,6 +15,7 @@ router = APIRouter(prefix="/books", tags=["books"])
 async def create_book(book: BookIn) -> BookOut | None:
     return await book_repository.create(book)
 
+
 @router.get("/")
 async def get_books(
     params: Annotated[PagingParams, Depends(paging_params)]

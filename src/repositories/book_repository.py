@@ -45,7 +45,7 @@ class BookRepository:
         return [self.converter.from_document(book) for book in docs]
     
 
-    async def get_by_title(self, title: PyObjectId, params: PagingParams) -> list[BookOut]:
+    async def get_by_title(self, title: str, params: PagingParams) -> list[BookOut]:
         docs = await self.collection.aggregate([
             {"$match": {"title": {"$regex": title}}},
             {"$lookup": { "from": "users", "localField": "user_id", "foreignField": "_id", "as": "user" }},
