@@ -25,4 +25,7 @@ class BookIn(BaseModel):
 
 class BookOut(BookIn):
     id: PyObjectId = Field(alias="_id")
+
+
+class BookWithUser(BookOut):    
     user: BaseUser

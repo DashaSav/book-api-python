@@ -3,31 +3,23 @@ from motor.motor_asyncio import AsyncIOMotorCollection
 
 from src.api.general import PagingParams
 from src.models.common import PyObjectId
-from src.models.converters.book_converter import BookConverter
-from src.models.book import BookIn, BookWithUser
+from src.models.converters.favorites_converter import FavoriteBookConverter
+from src.models.favorite_book import FavoriteBookOut, FavoriteBookIn
 
-class BookRepository:
-    def __init__(self, collection: AsyncIOMotorCollection, converter: BookConverter):
+
+class FavoriteBooksRepository:
+    def __init__(self, collection: AsyncIOMotorCollection, converter: FavoriteBookConverter):
         self.collection = collection
         self.converter = converter
 
 
-    async def get_all(self, params: PagingParams) -> list[BookWithUser]:
-        docs = await self.collection.aggregate([
-            {"$lookup": { "from": "users", "localField": "user_id", "foreignField": "_id", "as": "user" }},
-            {"$unwind": { "path": "$user" }},
-            {"$skip": params.skip},
-            {"$limit": params.limit}
-        ]).to_list(params.limit)
-
-        return [self.converter.from_document(book) for book in docs]
-
-
-    async def get_by_id(self, id: PyObjectId) -> BookWithUser | None:
+    async def get_by_id(self, id: PyObjectId) -> FavoriteBookOut | None:
         document = await self.collection.aggregate([
             {"$match": {"_id": ObjectId(id)}},
+            {"$lookup": { "from": "books", "localField": "book_id", "foreignField": "_id", "as": "book" }},
+            {"$unwind": { "path": "$book" }},
             {"$lookup": { "from": "users", "localField": "user_id", "foreignField": "_id", "as": "user" }},
-            {"$unwind": { "path": "$user" }}
+            {"$unwind": { "path": "$user" }},
         ]).next()
 
         return self.converter.from_document(document) if document else None
