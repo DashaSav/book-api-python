@@ -69,4 +69,3 @@ class UserInteractor:
             updated_user["hash_password"] = db_user.hash_password
 
         return await self.repository.update(id, UserUpsert(**updated_user))
-        

@@ -33,7 +33,6 @@ class JWTBearer(HTTPBearer):
         
         return credentials.credentials
 
-    # TODO: verify user_id
     def verify_jwt(self, token: str) -> bool:
         isTokenValid: bool = False
 

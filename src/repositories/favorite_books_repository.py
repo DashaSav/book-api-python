@@ -25,7 +25,7 @@ class FavoriteBooksRepository:
         return self.converter.from_document(document) if document else None
     
 
-    async def get_by_user(self, user_id: PyObjectId, params: PagingParams) -> list[BookWithUser]:
+    async def get_by_user(self, user_id: PyObjectId, params: PagingParams) -> list[FavoriteBookOut]:
         docs = await self.collection.aggregate([
             {"$match": {"user_id": ObjectId(user_id)}},
             {"$lookup": { "from": "users", "localField": "user_id", "foreignField": "_id", "as": "user" }},
@@ -37,7 +37,7 @@ class FavoriteBooksRepository:
         return [self.converter.from_document(book) for book in docs]
     
 
-    async def get_by_title(self, title: str, params: PagingParams) -> list[BookWithUser]:
+    async def get_by_title(self, title: str, params: PagingParams) -> list[FavoriteBookOut]:
         docs = await self.collection.aggregate([
             {"$match": {"title": {"$regex": title}}},
             {"$lookup": { "from": "users", "localField": "user_id", "foreignField": "_id", "as": "user" }},
@@ -49,7 +49,7 @@ class FavoriteBooksRepository:
         return [self.converter.from_document(book) for book in docs]
     
 
-    async def get_by_author(self, author: str, params: PagingParams) -> list[BookWithUser]:
+    async def get_by_author(self, author: str, params: PagingParams) -> list[FavoriteBookOut]:
         docs = await self.collection.aggregate([
             {"$lookup": { "from": "users", "localField": "user_id", "foreignField": "_id", "as": "user" }},
             {"$unwind": { "path": "$user" }},
@@ -61,7 +61,7 @@ class FavoriteBooksRepository:
         return [self.converter.from_document(book) for book in docs]
     
 
-    async def create(self, book: BookIn) -> BookWithUser | None:
+    async def create(self, book: FavoriteBookIn) -> FavoriteBookOut | None:
         inserted = await self.collection.insert_one(self.converter.to_document(book))
         
         document = await self.collection.aggregate([
@@ -73,7 +73,7 @@ class FavoriteBooksRepository:
         return self.converter.from_document(document) if document else None
     
 
-    async def update(self, id: PyObjectId, updated_book: BookIn) -> BookWithUser | None:
+    async def update(self, id: PyObjectId, updated_book: FavoriteBookIn) -> FavoriteBookOut | None:
         await self.collection.update_one(
             {"_id": ObjectId(id)},
             {"$set": self.converter.to_document(updated_book)}
