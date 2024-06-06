@@ -1,9 +1,10 @@
 from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorCollection
 
+from src.api.general import PagingParams
 from src.models.common import PyObjectId
 from src.models.converters.user_converter import UserConverter
-from src.models.user import UserUpsert, UserInDB
+from src.models.user import UserOut, UserUpsert, UserInDB
 
 class UserRepository:
     def __init__(self, collection: AsyncIOMotorCollection, converter: UserConverter):
@@ -20,6 +21,16 @@ class UserRepository:
         document = await self.collection.find_one({"email": email})
         return self.converter.from_document(document) if document else None
     
+
+    async def get_by_name(self, name: str, params: PagingParams) -> list[UserOut]:
+        docs = await self.collection.find({"name": { "$regex": name }}) \
+            .skip(params.skip) \
+            .limit(params.limit) \
+            .to_list(params.limit)
+        
+        return [self.converter.from_document(document) for document in docs]
+    
+
     # object ? update : insert => upsert
     async def create(self, user: UserUpsert) -> UserInDB | None:
         inserted = await self.collection.insert_one(self.converter.to_document(user))

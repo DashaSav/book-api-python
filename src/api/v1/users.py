@@ -1,5 +1,7 @@
+from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 
+from src.api.general import PagingParams, paging_params
 from src.auth.jwt_bearer import JWTBearer
 from src.models.auth import AuthRequest, AuthResponse
 from src.models.common import PyObjectId
@@ -46,6 +48,18 @@ async def get_user_by_email(email: str) -> UserOut:
         raise HTTPException(detail="User not found", status_code=404)
     
     return user
+
+
+@router.get("/findByName/{name}")
+async def get_users_by_name(
+    name: str,
+    params: Annotated[PagingParams, Depends(paging_params)]
+) -> list[UserOut]:
+    users = await user_repository.get_by_name(name, params)
+    if users.count is 0:
+        raise HTTPException(detail="Users not found", status_code=404)
+    
+    return users
 
 
 @router.put("/{id}", dependencies=[Depends(JWTBearer())])
