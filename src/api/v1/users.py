@@ -56,7 +56,7 @@ async def get_users_by_name(
     params: Annotated[PagingParams, Depends(paging_params)]
 ) -> list[UserOut]:
     users = await user_repository.get_by_name(name, params)
-    if users.count is 0:
+    if users.count == 0:
         raise HTTPException(detail="Users not found", status_code=404)
     
     return users

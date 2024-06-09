@@ -5,7 +5,7 @@ from src.api.general import PagingParams, paging_params
 from src.auth.jwt_bearer import JWTBearer
 from src.models.book import BookWithUser, BookIn
 from src.models.common import PyObjectId
-from src.structure import book_repository
+from src.structure import book_repository, book_interactor
 
 
 router = APIRouter(prefix="/books", tags=["books"])
@@ -21,6 +21,16 @@ async def get_books(
     params: Annotated[PagingParams, Depends(paging_params)]
 ) -> list[BookWithUser] | None:
     return await book_repository.get_all(params)
+
+
+@router.get("/rating/{id}")
+async def get_book_rating(id: PyObjectId):
+    rating = await book_interactor.get_rating(id)
+
+    if not rating:
+        raise HTTPException(detail="Book has no rating", status_code=404)
+
+    return rating
 
 
 @router.get("/{id}")

@@ -19,6 +19,7 @@ from src.repositories.chapter_repository import ChapterRepository
 from src.repositories.user_report_repository import UserReportRepository
 
 from src.interactors.user_interactor import UserInteractor
+from src.interactors.book_interactor import BookInteractor
 
 
 db = get_db()
@@ -40,3 +41,4 @@ book_report_repository = BookReportRepository(get_collection(db, "book_reports")
 rating_repository = RatingRepository(get_collection(db, "ratings"), rating_converter)
 
 user_interactor = UserInteractor(user_repository)
+book_interactor = BookInteractor(book_repository, rating_repository)
