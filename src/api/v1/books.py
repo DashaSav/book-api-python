@@ -25,12 +25,7 @@ async def get_books(
 
 @router.get("/rating/{id}")
 async def get_book_rating(id: PyObjectId):
-    rating = await book_interactor.get_rating(id)
-
-    if not rating:
-        raise HTTPException(detail="Book has no rating", status_code=404)
-
-    return rating
+    return await book_interactor.get_rating(id)
 
 
 @router.get("/{id}")
