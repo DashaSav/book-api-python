@@ -17,5 +17,3 @@ class FavoriteBookIn(BaseModel):
 
 class FavoriteBookOut(FavoriteBookIn):
     id: PyObjectId = Field(alias="_id")
-    book: BookOut
-    author: str

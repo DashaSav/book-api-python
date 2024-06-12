@@ -17,4 +17,3 @@ class FavoriteAuthorIn(BaseModel):
 
 class FavoriteAuthorOut(FavoriteAuthorIn):
     id: PyObjectId = Field(alias="_id")
-    author: BaseUser

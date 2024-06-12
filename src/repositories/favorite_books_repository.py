@@ -16,10 +16,6 @@ class FavoriteBooksRepository:
     async def get_by_id(self, id: PyObjectId) -> FavoriteBookOut | None:
         document = await self.collection.aggregate([
             {"$match": {"_id": ObjectId(id)}},
-            {"$lookup": { "from": "books", "localField": "book_id", "foreignField": "_id", "as": "book" }},
-            {"$unwind": { "path": "$book" }},
-            {"$lookup": { "from": "users", "localField": "user_id", "foreignField": "_id", "as": "user" }},
-            {"$unwind": { "path": "$user" }},
         ]).next()
 
         return self.converter.from_document(document) if document else None
@@ -28,36 +24,10 @@ class FavoriteBooksRepository:
     async def get_by_user(self, user_id: PyObjectId, params: PagingParams) -> list[FavoriteBookOut]:
         docs = await self.collection.aggregate([
             {"$match": {"user_id": ObjectId(user_id)}},
-            {"$lookup": { "from": "users", "localField": "user_id", "foreignField": "_id", "as": "user" }},
-            {"$unwind": { "path": "$user" }},
             {"$skip": params.skip},
             {"$limit": params.limit}
         ]).to_list(params.limit)
 
-        return [self.converter.from_document(book) for book in docs]
-    
-
-    async def get_by_title(self, title: str, params: PagingParams) -> list[FavoriteBookOut]:
-        docs = await self.collection.aggregate([
-            {"$match": {"title": {"$regex": title}}},
-            {"$lookup": { "from": "users", "localField": "user_id", "foreignField": "_id", "as": "user" }},
-            {"$unwind": { "path": "$user" }},
-            {"$skip": params.skip},
-            {"$limit": params.limit}
-        ]).to_list(params.limit)
-
-        return [self.converter.from_document(book) for book in docs]
-    
-
-    async def get_by_author(self, author: str, params: PagingParams) -> list[FavoriteBookOut]:
-        docs = await self.collection.aggregate([
-            {"$lookup": { "from": "users", "localField": "user_id", "foreignField": "_id", "as": "user" }},
-            {"$unwind": { "path": "$user" }},
-            {"$match": {"user.name": {"$regex": author}}},
-            {"$skip": params.skip},
-            {"$limit": params.limit}
-        ]).to_list(params.limit)
-        
         return [self.converter.from_document(book) for book in docs]
     
 
@@ -66,27 +36,13 @@ class FavoriteBooksRepository:
         
         document = await self.collection.aggregate([
             {"$match": {"_id": inserted.inserted_id}},
-            {"$lookup": {"from": "users", "localField": "user_id", "foreignField": "_id", "as": "user"}},
-            {"$unwind": {"path": "$user"}}
         ]).next()
 
         return self.converter.from_document(document) if document else None
     
 
-    async def update(self, id: PyObjectId, updated_book: FavoriteBookIn) -> FavoriteBookOut | None:
-        await self.collection.update_one(
-            {"_id": ObjectId(id)},
-            {"$set": self.converter.to_document(updated_book)}
-        )
-
-        document = await self.collection.aggregate([
-            {"$match": {"_id": ObjectId(id)}},
-            {"$lookup": {"from": "users", "localField": "user_id", "foreignField": "_id", "as": "user"}},
-            {"$unwind": {"path": "$user"}}
-        ]).next()
-
-        return self.converter.from_document(document) if document else None
-    
-
-    async def delete(self, id: PyObjectId):
-        return await self.collection.delete_one({"_id": ObjectId(id)})
+    async def delete(self, user_id: PyObjectId, book_id: PyObjectId):
+        return await self.collection.delete_one({
+            "book_id": ObjectId(book_id),
+            "user_id": ObjectId(user_id)
+        })
